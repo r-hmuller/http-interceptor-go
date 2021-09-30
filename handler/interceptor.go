@@ -6,6 +6,7 @@ import (
 	uuid "github.com/nu7hatch/gouuid"
 	"httpInterceptor/logging"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -34,12 +35,8 @@ func InterceptorHandler(w http.ResponseWriter, r *http.Request) {
 	requestToApp := r.Clone(r.Context())
 	requestToApp.URL.Host = hostEnv
 	serverResponse := HTTPResponse{}
-	switch method := requestToApp.Method; method {
-	case "GET":
-		serverResponse = sendGetRequest(requestToApp, u)
-	default:
-		panic("Method not found")
-	}
+	method := requestToApp.Method
+	serverResponse = sendRequest(method, requestToApp, u)
 
 	w.WriteHeader(serverResponse.StatusCode)
 	_, err = w.Write(serverResponse.Body)
@@ -50,22 +47,27 @@ func InterceptorHandler(w http.ResponseWriter, r *http.Request) {
 	processedMap[u.String()] = true
 }
 
-func sendGetRequest(destiny *http.Request, uuid *uuid.UUID) HTTPResponse {
-	tr := &http.Transport{
-		MaxIdleConns:       10,
-		IdleConnTimeout:    30 * time.Second,
-		DisableCompression: true,
-	}
-	client := &http.Client{Transport: tr}
+func sendRequest(method string, destiny *http.Request, uuid *uuid.UUID) HTTPResponse {
+	response := HTTPResponse{}
+	client := getClient()
 	fullUrl := getScheme(destiny) + destiny.URL.String()
-	logging.LogToFile(fullUrl, "default")
-	req, err := http.NewRequest("GET", fullUrl, nil)
-	req.Header.Add("Interceptor-Controller", uuid.String())
+
+	requestBody, err := ioutil.ReadAll(destiny.Body)
 	if err != nil {
-		logging.LogToFile(err.Error(), "fatal")
+		log.Printf("Error reading body: %v", err)
+		response.StatusCode = 500
+		return response
+	}
+	destiny.Body = ioutil.NopCloser(bytes.NewBuffer(requestBody))
+	req, err := http.NewRequest(method, fullUrl, bytes.NewBuffer(requestBody))
+	req.Header.Add("Interceptor-Controller", uuid.String())
+	//Add all headers
+	addHeaders(destiny, req)
+
+	if err != nil {
+		logging.LogToFile(err.Error(), "default")
 	}
 
-	response := HTTPResponse{}
 	resp, err := client.Do(req)
 	if err != nil {
 		logging.LogToFile(err.Error(), "default")
@@ -79,8 +81,6 @@ func sendGetRequest(destiny *http.Request, uuid *uuid.UUID) HTTPResponse {
 	response.Header = resp.Header
 	response.Body = body
 	response.InterceptorControl = uuid
-
-	//logging.LogToFile(resp.Status, "default")
 	return response
 }
 
@@ -92,6 +92,16 @@ func getScheme(destiny *http.Request) string {
 	return scheme
 }
 
+func getClient() *http.Client {
+	tr := &http.Transport{
+		MaxIdleConns:       10,
+		IdleConnTimeout:    30 * time.Second,
+		DisableCompression: true,
+	}
+	return &http.Client{Transport: tr}
+
+}
+
 func getBodyContent(response *http.Response) ([]byte, error) {
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
@@ -100,4 +110,12 @@ func getBodyContent(response *http.Response) ([]byte, error) {
 	}
 	response.Body = ioutil.NopCloser(bytes.NewBuffer(body))
 	return body, nil
+}
+
+func addHeaders(original *http.Request, created *http.Request) {
+	for name, values := range original.Header {
+		for _, value := range values {
+			created.Header.Add(name, value)
+		}
+	}
 }
