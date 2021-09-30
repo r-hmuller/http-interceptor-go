@@ -1,0 +1,29 @@
+version: "3.5"
+
+services:
+  interceptor:
+    build: .
+    restart: always
+    environment:
+      HOST: kv-store:5000
+      PORT: :3000
+      LOG_PATH: logs/log.txt
+    ports:
+      - "3000:3000"
+    networks:
+      - cr-stateful-arch
+    volumes:
+      - /home/rodrigo/Mestrado/httpInterceptor/logs:/app/logs
+  kv-store:
+    image: rodrigohmuller/kv-golang-test-rodigo
+    environment:
+      PORT: :5000
+    ports:
+      - "5000:5000"
+    networks:
+      - cr-stateful-arch
+networks:
+  cr-stateful-arch:
+    driver: bridge
+
+
