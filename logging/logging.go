@@ -14,6 +14,12 @@ func LogToFile(msg string, level string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(file)
 
 	log.SetOutput(file)
 	if level == "fatal" {
