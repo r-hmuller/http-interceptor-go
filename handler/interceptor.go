@@ -4,15 +4,14 @@ import (
 	"bytes"
 	"errors"
 	uuid "github.com/nu7hatch/gouuid"
+	"httpInterceptor/config"
 	"httpInterceptor/logging"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 	"time"
 )
-
-var hostEnv = os.Getenv("HOST")
 
 var requestsMap = make(map[string]*http.Request)
 var processedMap = make(map[string]bool)
@@ -33,7 +32,7 @@ func InterceptorHandler(w http.ResponseWriter, r *http.Request) {
 	processedMap[u.String()] = false
 
 	requestToApp := r.Clone(r.Context())
-	requestToApp.URL.Host = hostEnv
+	requestToApp.URL.Host = config.GetApplicationURL()
 	serverResponse := HTTPResponse{}
 	method := requestToApp.Method
 	serverResponse = sendRequest(method, requestToApp, u)
@@ -60,14 +59,14 @@ func sendRequest(method string, destiny *http.Request, uuid *uuid.UUID) HTTPResp
 	}
 	destiny.Body = ioutil.NopCloser(bytes.NewBuffer(requestBody))
 	req, err := http.NewRequest(method, fullUrl, bytes.NewBuffer(requestBody))
-	req.Header.Add("Interceptor-Controller", uuid.String())
-	//Add all headers
-	addHeaders(destiny, req)
-
 	if err != nil {
 		logging.LogToFile(err.Error(), "default")
+		response.StatusCode = 500
+		return response
 	}
 
+	req.Header.Add("Interceptor-Controller", uuid.String())
+	addHeaders(destiny, req)
 	resp, err := client.Do(req)
 	if err != nil {
 		logging.LogToFile(err.Error(), "default")
@@ -75,12 +74,25 @@ func sendRequest(method string, destiny *http.Request, uuid *uuid.UUID) HTTPResp
 		return response
 	}
 
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			logging.LogToFile(err.Error(), "default")
+		}
+	}(resp.Body)
+
 	body, err := getBodyContent(resp)
 
 	response.StatusCode = resp.StatusCode
 	response.Header = resp.Header
 	response.Body = body
 	response.InterceptorControl = uuid
+
+	for name, values := range resp.Header {
+		for _, value := range values {
+			logging.LogToFile("Name ->"+name+" value ->"+value, "default")
+		}
+	}
 	return response
 }
 
