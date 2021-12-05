@@ -26,3 +26,16 @@ func GetHeartbearThreshold() int {
 	}
 	return threshold
 }
+
+func GetSnapshotPeriodicity() int {
+	periodicity := 1800
+	periodicityEnv := os.Getenv("SNAPSHOT_PERIODICITY")
+	if periodicityEnv != "" {
+		periodicity, err := strconv.Atoi(periodicityEnv)
+		if err != nil {
+			logging.LogToFile(err.Error(), "fatal")
+		}
+		return periodicity
+	}
+	return periodicity
+}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/gorilla/mux"
+	"httpInterceptor/checkpoint"
 	"httpInterceptor/config"
 	"httpInterceptor/handler"
 	"httpInterceptor/heartbeat"
@@ -24,6 +25,8 @@ func main() {
 	go startListener()
 	wg.Add(1)
 	go heartbeat.Monitor()
+	wg.Add(1)
+	go checkpoint.Monitor()
 	wg.Wait()
 }
 
