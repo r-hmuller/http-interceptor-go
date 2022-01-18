@@ -19,6 +19,7 @@ func Monitor() {
 }
 
 func generateSnapshot() {
+	startTime := time.Now()
 	// create a new client connected to the default socket path for containerd
 	client, err := containerd.New("/run/containerd/containerd.sock")
 	if err != nil {
@@ -46,6 +47,9 @@ func generateSnapshot() {
 				panic(err)
 			}
 
+			endTime := time.Now()
+			deltaTime := endTime.Sub(startTime).Nanoseconds()
+			print(deltaTime)
 			registry := config.GetRegistry()
 			containerSnapshotVersion := registry + ":" + uuid.NewString()
 			err = client.Push(ctx, containerSnapshotVersion, checkpoint.Target())
