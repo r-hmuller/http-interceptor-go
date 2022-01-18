@@ -39,3 +39,11 @@ func GetSnapshotPeriodicity() int {
 	}
 	return periodicity
 }
+
+func GetPodName() string {
+	return os.Getenv("POD_NAME")
+}
+
+func GetRegistry() string {
+	return os.Getenv("REGISTRY")
+}
