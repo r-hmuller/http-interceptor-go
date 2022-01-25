@@ -48,6 +48,19 @@ func GetRegistry() string {
 	return os.Getenv("REGISTRY")
 }
 
+func GetCheckpointEnabled() bool {
+	shouldDoCheckpoint := true
+	doCheckpoint := os.Getenv("ENABLE_CHECKPOINT")
+	if doCheckpoint != "" {
+		shouldDoCheckpoint, err := strconv.ParseBool(doCheckpoint)
+		if err != nil {
+			panic(err)
+		}
+		return shouldDoCheckpoint
+	}
+	return shouldDoCheckpoint
+}
+
 func GetStateManagerUrl() string {
 	return os.Getenv("STATE_MANAGER")
 }
