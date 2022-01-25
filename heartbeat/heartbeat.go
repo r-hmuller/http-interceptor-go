@@ -1,6 +1,7 @@
 package heartbeat
 
 import (
+	"httpInterceptor/checkpoint"
 	"httpInterceptor/config"
 	"httpInterceptor/logging"
 	"net/http"
@@ -46,7 +47,7 @@ func heartbeat() {
 func shouldOpenCircuit() {
 	threshold := config.GetHeartbearThreshold()
 	if failedTries > threshold {
-		//do something
+		checkpoint.Restore()
 	}
 }
 

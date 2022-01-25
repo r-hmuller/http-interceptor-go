@@ -47,3 +47,11 @@ func GetPodName() string {
 func GetRegistry() string {
 	return os.Getenv("REGISTRY")
 }
+
+func GetStateManagerUrl() string {
+	return os.Getenv("STATE_MANAGER")
+}
+
+func GetLogginPath() string {
+	return os.Getenv("LOGGING_PATH")
+}
