@@ -6,7 +6,7 @@ import (
 )
 
 func LogToFile(msg string, level string) {
-	logEnv := os.Getenv("LOG_PATH")
+	logEnv := os.Getenv("LOGGING_PATH")
 	if logEnv == "" {
 		panic("Couldn't find LOG_PATH env")
 	}

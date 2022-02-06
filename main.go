@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"github.com/gorilla/mux"
 	"httpInterceptor/checkpoint"
 	"httpInterceptor/config"
@@ -33,6 +34,8 @@ func main() {
 }
 
 func startListener() {
+	// Disable SSL validation, because some client may have invalid certificates
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	router := mux.NewRouter()
 	router.PathPrefix("/").HandlerFunc(handler.InterceptorHandler)
 	log.Fatal(http.ListenAndServe(config.GetInterceptorPort(), router))
