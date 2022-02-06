@@ -7,6 +7,8 @@ import (
 	"github.com/containerd/containerd/namespaces"
 	"github.com/google/uuid"
 	"httpInterceptor/config"
+	"os"
+	"strconv"
 	"time"
 )
 
@@ -19,7 +21,7 @@ func Monitor() {
 }
 
 func generateSnapshot() {
-	startTime := time.Now()
+	startTime := time.Now().Unix()
 	// create a new client connected to the default socket path for containerd
 	client, err := containerd.New("/run/containerd/containerd.sock")
 	if err != nil {
@@ -47,9 +49,6 @@ func generateSnapshot() {
 				panic(err)
 			}
 
-			endTime := time.Now()
-			deltaTime := endTime.Sub(startTime).Nanoseconds()
-			print(deltaTime)
 			registry := config.GetRegistry()
 			containerSnapshotVersion := registry + ":" + uuid.NewString()
 			err = client.Push(ctx, containerSnapshotVersion, checkpoint.Target())
@@ -57,5 +56,23 @@ func generateSnapshot() {
 				panic(err)
 			}
 		}
+	}
+
+	endTime := time.Now().Unix()
+	deltaTime := endTime - startTime
+	loggingPath := config.GetLogginPath()
+	f, err := os.OpenFile(loggingPath+"/checkpoint.txt", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+	if err != nil {
+		panic(err)
+	}
+	defer func(f *os.File) {
+		err := f.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(f)
+
+	if _, err = f.WriteString(strconv.FormatInt(deltaTime, 10)); err != nil {
+		panic(err)
 	}
 }

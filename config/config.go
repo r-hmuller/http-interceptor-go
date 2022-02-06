@@ -60,3 +60,11 @@ func GetCheckpointEnabled() bool {
 	}
 	return shouldDoCheckpoint
 }
+
+func GetStateManagerUrl() string {
+	return os.Getenv("STATE_MANAGER")
+}
+
+func GetLogginPath() string {
+	return os.Getenv("LOGGING_PATH")
+}
