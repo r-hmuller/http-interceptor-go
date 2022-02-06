@@ -24,9 +24,9 @@ func main() {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go startListener()
-	wg.Add(1)
-	go heartbeat.Monitor()
 	if config.GetCheckpointEnabled() {
+		wg.Add(1)
+		go heartbeat.Monitor()
 		wg.Add(1)
 		go checkpoint.Monitor()
 	}
