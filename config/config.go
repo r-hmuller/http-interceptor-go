@@ -68,3 +68,12 @@ func GetStateManagerUrl() string {
 func GetLogginPath() string {
 	return os.Getenv("LOGGING_PATH")
 }
+
+func GetHttpScheme() string {
+	scheme := "http"
+	schemeEnv := os.Getenv("HTTP_SCHEME")
+	if schemeEnv == "https" {
+		return "https"
+	}
+	return scheme
+}

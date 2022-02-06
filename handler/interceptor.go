@@ -49,7 +49,7 @@ func InterceptorHandler(w http.ResponseWriter, r *http.Request) {
 func sendRequest(method string, destiny *http.Request, uuid *uuid.UUID) HTTPResponse {
 	response := HTTPResponse{}
 	client := getClient()
-	fullUrl := getScheme(destiny) + destiny.URL.String()
+	fullUrl := getScheme() + destiny.URL.String()
 
 	requestBody, err := ioutil.ReadAll(destiny.Body)
 	if err != nil {
@@ -96,11 +96,8 @@ func sendRequest(method string, destiny *http.Request, uuid *uuid.UUID) HTTPResp
 	return response
 }
 
-func getScheme(destiny *http.Request) string {
-	scheme := "https:"
-	if destiny.TLS == nil {
-		scheme = "http:"
-	}
+func getScheme() string {
+	scheme := config.GetHttpScheme()
 	return scheme
 }
 
