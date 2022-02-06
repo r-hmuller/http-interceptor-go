@@ -100,7 +100,7 @@ func getScheme() string {
 func getClient() *http.Client {
 	tr := &http.Transport{
 		MaxIdleConns:        0,
-		MaxIdleConnsPerHost: 2000,
+		MaxIdleConnsPerHost: 10000,
 		IdleConnTimeout:     5 * time.Second,
 		DisableCompression:  true,
 		TLSClientConfig:     &tls.Config{InsecureSkipVerify: true},
