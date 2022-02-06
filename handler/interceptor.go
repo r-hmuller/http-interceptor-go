@@ -38,7 +38,6 @@ func InterceptorHandler(w http.ResponseWriter, r *http.Request) {
 	method := requestToApp.Method
 	serverResponse = sendRequest(method, requestToApp, u)
 
-	logging.LogToFile("Cheguei aqui", "default")
 	w.WriteHeader(serverResponse.StatusCode)
 	_, err = w.Write(serverResponse.Body)
 	if err != nil {
@@ -53,7 +52,6 @@ func sendRequest(method string, destiny *http.Request, uuid *uuid.UUID) HTTPResp
 	client := getClient()
 	fullUrl := getScheme() + destiny.URL.String()
 
-	logging.LogToFile(fullUrl, "default")
 	requestBody, err := ioutil.ReadAll(destiny.Body)
 	if err != nil {
 		log.Printf("Error reading body: %v", err)
@@ -91,11 +89,6 @@ func sendRequest(method string, destiny *http.Request, uuid *uuid.UUID) HTTPResp
 	response.Body = body
 	response.InterceptorControl = uuid
 
-	for name, values := range resp.Header {
-		for _, value := range values {
-			logging.LogToFile("Name ->"+name+" value ->"+value, "default")
-		}
-	}
 	return response
 }
 
@@ -106,7 +99,7 @@ func getScheme() string {
 
 func getClient() *http.Client {
 	tr := &http.Transport{
-		MaxIdleConns:       10,
+		MaxIdleConns:       0,
 		IdleConnTimeout:    30 * time.Second,
 		DisableCompression: true,
 		TLSClientConfig:    &tls.Config{InsecureSkipVerify: true},
