@@ -70,10 +70,10 @@ func GetLogginPath() string {
 }
 
 func GetHttpScheme() string {
-	scheme := "http"
+	scheme := "http:"
 	schemeEnv := os.Getenv("HTTP_SCHEME")
 	if schemeEnv == "https" {
-		return "https"
+		return "https:"
 	}
 	return scheme
 }

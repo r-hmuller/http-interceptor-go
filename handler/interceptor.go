@@ -51,6 +51,7 @@ func sendRequest(method string, destiny *http.Request, uuid *uuid.UUID) HTTPResp
 	client := getClient()
 	fullUrl := getScheme() + destiny.URL.String()
 
+	logging.LogToFile(fullUrl, "default")
 	requestBody, err := ioutil.ReadAll(destiny.Body)
 	if err != nil {
 		log.Printf("Error reading body: %v", err)
