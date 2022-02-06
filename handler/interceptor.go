@@ -37,6 +37,7 @@ func InterceptorHandler(w http.ResponseWriter, r *http.Request) {
 	method := requestToApp.Method
 	serverResponse = sendRequest(method, requestToApp, u)
 
+	logging.LogToFile("Cheguei aqui", "default")
 	w.WriteHeader(serverResponse.StatusCode)
 	_, err = w.Write(serverResponse.Body)
 	if err != nil {
