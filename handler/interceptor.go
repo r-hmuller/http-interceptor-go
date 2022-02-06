@@ -2,6 +2,7 @@ package handler
 
 import (
 	"bytes"
+	"crypto/tls"
 	"errors"
 	uuid "github.com/nu7hatch/gouuid"
 	"httpInterceptor/config"
@@ -108,6 +109,7 @@ func getClient() *http.Client {
 		MaxIdleConns:       10,
 		IdleConnTimeout:    30 * time.Second,
 		DisableCompression: true,
+		TLSClientConfig:    &tls.Config{InsecureSkipVerify: true},
 	}
 	return &http.Client{Transport: tr}
 
