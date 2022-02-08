@@ -1,66 +1,26 @@
 package checkpoint
 
 import (
-	"context"
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/cio"
-	"github.com/containerd/containerd/namespaces"
+	"bytes"
+	"encoding/json"
 	"httpInterceptor/config"
-	"io/ioutil"
+	"log"
 	"net/http"
-	"os"
-	"strconv"
-	"time"
 )
 
 func Restore() {
-	startTime := time.Now().Unix()
-	podName := config.GetPodName()
-	stateManager := config.GetStateManagerUrl()
-
-	resp, err := http.Get(stateManager + "/" + podName)
+	postBody, _ := json.Marshal(map[string]string{
+		"Namespace": config.GetContainerNamespace(),
+		"Container": config.GetContainerServiceName(),
+		"Service":   config.GetServiceName(),
+	})
+	responseBody := bytes.NewBuffer(postBody)
+	//Leverage Go's HTTP Post function to make request
+	fullUrl := config.GetDaemonEndpoint() + "/restore"
+	resp, err := http.Post(fullUrl, "application/json", responseBody)
+	//Handle Error
 	if err != nil {
-		panic(err)
+		log.Fatalf("An Error Occured %v", err)
 	}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		panic(err)
-	}
-	latestSnapshot := string(body)
-
-	client, err := containerd.New("/run/containerd/containerd.sock")
-	if err != nil {
-		panic(err)
-	}
-	defer client.Close()
-	ctx := namespaces.WithNamespace(context.Background(), "default")
-	registry := config.GetRegistry()
-	containerSnapshotVersion := registry + ":" + latestSnapshot
-	checkpoint, err := client.Pull(ctx, containerSnapshotVersion)
-
-	application, err := client.NewContainer(ctx, podName, containerd.WithNewSnapshot("application-"+podName, checkpoint))
-	if err != nil {
-		panic(err)
-	}
-
-	task, err := application.NewTask(ctx, cio.NewCreator(cio.WithStdio), containerd.WithTaskCheckpoint(checkpoint))
-	err = task.Start(ctx)
-
-	endTime := time.Now().Unix()
-	deltaTime := endTime - startTime
-	loggingPath := config.GetLogginPath()
-	f, err := os.OpenFile(loggingPath+"/restorer.txt", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
-	if err != nil {
-		panic(err)
-	}
-	defer func(f *os.File) {
-		err := f.Close()
-		if err != nil {
-			panic(err)
-		}
-	}(f)
-
-	if _, err = f.WriteString(strconv.FormatInt(deltaTime, 10)); err != nil {
-		panic(err)
-	}
+	defer resp.Body.Close()
 }

@@ -4,6 +4,7 @@ import (
 	"httpInterceptor/logging"
 	"os"
 	"strconv"
+	"strings"
 )
 
 func GetApplicationURL() string {
@@ -76,4 +77,24 @@ func GetHttpScheme() string {
 		return "https:"
 	}
 	return scheme
+}
+
+func GetContainerServiceName() string {
+	return os.Getenv("CONTAINER_NAME")
+}
+
+func GetServiceName() string {
+	return os.Getenv("SERVICE_NAME")
+}
+
+func GetContainerNamespace() string {
+	namespaceEnv := os.Getenv("CONTAINER_NAMESPACE")
+	if namespaceEnv != "" {
+		return namespaceEnv
+	}
+	return "default"
+}
+
+func GetDaemonEndpoint() string {
+	return strings.TrimRight(os.Getenv("INTERCEPTOR_DAEMON_HTTP"), "/")
 }

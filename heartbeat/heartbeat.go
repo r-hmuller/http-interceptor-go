@@ -40,6 +40,7 @@ func heartbeat() {
 		failedTries++
 		return
 	}
+	shouldOpenCircuit()
 }
 
 func shouldOpenCircuit() {
