@@ -25,7 +25,8 @@ func checkServer(d time.Duration) {
 
 func heartbeat() {
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", config.GetApplicationURL(), nil)
+	fullUrl := config.GetHttpScheme() + "://" + config.GetApplicationURL()
+	req, err := http.NewRequest("GET", fullUrl, nil)
 	if err != nil {
 		logging.LogToFile(err.Error(), "default")
 	}
