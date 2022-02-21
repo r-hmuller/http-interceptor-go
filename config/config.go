@@ -7,8 +7,23 @@ import (
 	"strings"
 )
 
+var port = "3000"
+
 func GetApplicationURL() string {
-	return os.Getenv("HOST")
+	return os.Getenv("HOST") + ":" + port
+}
+
+func GetApplicationPort() string {
+	if port == "3000" {
+		newPort := os.Getenv("APPLICATION_PORT")
+		port = newPort
+		return newPort
+	}
+	return port
+}
+
+func SetApplicationPort(newPort string) {
+	port = newPort
 }
 
 func GetInterceptorPort() string {
