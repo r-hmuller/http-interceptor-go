@@ -113,3 +113,7 @@ func GetContainerNamespace() string {
 func GetDaemonEndpoint() string {
 	return strings.TrimRight(os.Getenv("INTERCEPTOR_DAEMON_HTTP"), "/")
 }
+
+func GetYamlString() string {
+	return os.Getenv("YAML_FILE_NEW")
+}

@@ -19,9 +19,10 @@ func Monitor() {
 
 func generateSnapshot() {
 	postBody, _ := json.Marshal(map[string]string{
-		"Namespace": config.GetContainerNamespace(),
-		"Container": config.GetContainerServiceName(),
-		"Service":   config.GetServiceName(),
+		"Namespace":  config.GetContainerNamespace(),
+		"Container":  config.GetContainerServiceName(),
+		"Service":    config.GetServiceName(),
+		"YamlString": config.GetYamlString(),
 	})
 	responseBody := bytes.NewBuffer(postBody)
 	//Leverage Go's HTTP Post function to make request
