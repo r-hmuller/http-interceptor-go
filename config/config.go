@@ -65,7 +65,6 @@ func GetRegistry() string {
 }
 
 func GetCheckpointEnabled() bool {
-	shouldDoCheckpoint := true
 	doCheckpoint := os.Getenv("ENABLE_CHECKPOINT")
 	if doCheckpoint != "" {
 		shouldDoCheckpoint, err := strconv.ParseBool(doCheckpoint)
@@ -74,7 +73,19 @@ func GetCheckpointEnabled() bool {
 		}
 		return shouldDoCheckpoint
 	}
-	return shouldDoCheckpoint
+	return true
+}
+
+func GetHeartBeatEnabled() bool {
+	doCheckpoint := os.Getenv("ENABLE_HEARTBEAT")
+	if doCheckpoint != "" {
+		shouldDoCheckpoint, err := strconv.ParseBool(doCheckpoint)
+		if err != nil {
+			panic(err)
+		}
+		return shouldDoCheckpoint
+	}
+	return true
 }
 
 func GetStateManagerUrl() string {
