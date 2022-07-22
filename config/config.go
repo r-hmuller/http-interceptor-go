@@ -10,7 +10,7 @@ import (
 var port = "3000"
 
 func GetApplicationURL() string {
-	return os.Getenv("HOST") + ":" + port
+	return os.Getenv("HOST") + ":" + GetApplicationPort()
 }
 
 func GetApplicationPort() string {
