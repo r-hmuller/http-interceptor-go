@@ -11,11 +11,13 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"sync"
 	"time"
 )
 
 var requestsMap = make(map[string]*http.Request)
 var processedMap = make(map[string]bool)
+var someMapMutex = sync.RWMutex{}
 
 type HTTPResponse struct {
 	StatusCode         int
@@ -29,8 +31,11 @@ func InterceptorHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logging.LogToFile(err.Error(), "fatal")
 	}
+
+	someMapMutex.Lock()
 	requestsMap[u.String()] = r
 	processedMap[u.String()] = false
+	someMapMutex.Unlock()
 
 	requestToApp := r.Clone(r.Context())
 	requestToApp.URL.Host = config.GetApplicationURL()
@@ -44,7 +49,9 @@ func InterceptorHandler(w http.ResponseWriter, r *http.Request) {
 		logging.LogToFile(err.Error(), "fatal")
 	}
 
+	someMapMutex.Lock()
 	processedMap[u.String()] = true
+	someMapMutex.Unlock()
 }
 
 func sendRequest(method string, destiny *http.Request, uuid *uuid.UUID) HTTPResponse {
