@@ -7,7 +7,6 @@ import (
 	uuid "github.com/nu7hatch/gouuid"
 	"httpInterceptor/config"
 	"httpInterceptor/logging"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -81,17 +80,26 @@ func sendRequest(method string, destiny *http.Request, uuid *uuid.UUID) HTTPResp
 		response.StatusCode = 500
 		return response
 	}
-
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			logging.LogToFile(err.Error(), "default")
-		}
-	}(resp.Body)
-	body, err := getBodyContent(resp)
-
 	response.StatusCode = resp.StatusCode
 	response.Header = resp.Header
+	body, err := getBodyContent(resp)
+	if err != nil {
+		logging.LogToFile(err.Error(), "default")
+		response.StatusCode = 500
+		return response
+	}
+	err = resp.Body.Close()
+	if err != nil {
+		logging.LogToFile(err.Error(), "default")
+		response.StatusCode = 500
+		return response
+	}
+	if err != nil {
+		logging.LogToFile(err.Error(), "default")
+		response.StatusCode = 500
+		return response
+	}
+
 	response.Body = body
 	response.InterceptorControl = uuid
 
@@ -106,7 +114,7 @@ func getScheme() string {
 func getClient() *http.Client {
 	tr := &http.Transport{
 		MaxIdleConns:        0,
-		MaxIdleConnsPerHost: 100000,
+		MaxIdleConnsPerHost: 500000,
 		IdleConnTimeout:     5 * time.Second,
 		DisableCompression:  true,
 		TLSClientConfig:     &tls.Config{InsecureSkipVerify: true},
@@ -121,7 +129,6 @@ func getBodyContent(response *http.Response) ([]byte, error) {
 		logging.LogToFile("Error parsing body", "default")
 		return nil, errors.New("Error parsing request body")
 	}
-	response.Body = ioutil.NopCloser(bytes.NewBuffer(body))
 	return body, nil
 }
 
