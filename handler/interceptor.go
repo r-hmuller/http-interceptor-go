@@ -88,7 +88,6 @@ func sendRequest(method string, destiny *http.Request, uuid *uuid.UUID) HTTPResp
 			logging.LogToFile(err.Error(), "default")
 		}
 	}(resp.Body)
-
 	body, err := getBodyContent(resp)
 
 	response.StatusCode = resp.StatusCode
@@ -107,7 +106,7 @@ func getScheme() string {
 func getClient() *http.Client {
 	tr := &http.Transport{
 		MaxIdleConns:        0,
-		MaxIdleConnsPerHost: 10000,
+		MaxIdleConnsPerHost: 100000,
 		IdleConnTimeout:     5 * time.Second,
 		DisableCompression:  true,
 		TLSClientConfig:     &tls.Config{InsecureSkipVerify: true},
