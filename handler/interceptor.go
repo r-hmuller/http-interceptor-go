@@ -2,7 +2,6 @@ package handler
 
 import (
 	"bytes"
-	"crypto/tls"
 	"errors"
 	uuid "github.com/nu7hatch/gouuid"
 	"httpInterceptor/config"
@@ -11,7 +10,6 @@ import (
 	"log"
 	"net/http"
 	"sync"
-	"time"
 )
 
 var requestsMap = make(map[string]*http.Request)
@@ -55,7 +53,7 @@ func InterceptorHandler(w http.ResponseWriter, r *http.Request) {
 
 func sendRequest(method string, destiny *http.Request, uuid *uuid.UUID) HTTPResponse {
 	response := HTTPResponse{}
-	client := getClient()
+	client := getHttpClient()
 	fullUrl := getScheme() + destiny.URL.String()
 
 	requestBody, err := ioutil.ReadAll(destiny.Body)
@@ -109,18 +107,6 @@ func sendRequest(method string, destiny *http.Request, uuid *uuid.UUID) HTTPResp
 func getScheme() string {
 	scheme := config.GetHttpScheme()
 	return scheme
-}
-
-func getClient() *http.Client {
-	tr := &http.Transport{
-		MaxIdleConns:        0,
-		MaxIdleConnsPerHost: 500000,
-		IdleConnTimeout:     5 * time.Second,
-		DisableCompression:  true,
-		TLSClientConfig:     &tls.Config{InsecureSkipVerify: true},
-	}
-	return &http.Client{Transport: tr}
-
 }
 
 func getBodyContent(response *http.Response) ([]byte, error) {
