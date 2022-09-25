@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"httpInterceptor/config"
+	"httpInterceptor/logging"
 	"log"
 	"net/http"
 	"time"
@@ -18,6 +19,7 @@ func Monitor() {
 }
 
 func generateSnapshot() {
+	logging.LogToSnapshotFile("Starting snapshot")
 	postBody, _ := json.Marshal(map[string]string{
 		"Namespace":  config.GetContainerNamespace(),
 		"Container":  config.GetContainerServiceName(),
@@ -33,4 +35,5 @@ func generateSnapshot() {
 		log.Fatalf("An Error Occured %v", err)
 	}
 	defer resp.Body.Close()
+	logging.LogToSnapshotFile("Snapshot completed")
 }

@@ -3,6 +3,8 @@ package logging
 import (
 	"log"
 	"os"
+	"strconv"
+	"time"
 )
 
 func LogToFile(msg string, level string) {
@@ -26,5 +28,23 @@ func LogToFile(msg string, level string) {
 		log.Fatal(msg)
 	} else {
 		log.Println(msg)
+	}
+}
+
+func LogToSnapshotFile(msg string) {
+	crLogging := os.Getenv("CR_LOGGING_PATH")
+	if crLogging == "" {
+		panic("Couldn't find CR_LOGGING_PATH env")
+	}
+	currentTimestamp := time.Now().UnixNano()
+	f, err := os.OpenFile(crLogging,
+		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer f.Close()
+	stringToStore := msg + "@" + strconv.FormatInt(currentTimestamp, 10)
+	if _, err := f.WriteString(stringToStore); err != nil {
+		log.Println(err)
 	}
 }
