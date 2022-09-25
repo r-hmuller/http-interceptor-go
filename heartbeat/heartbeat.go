@@ -48,6 +48,7 @@ func shouldOpenCircuit() {
 	threshold := config.GetHeartbearThreshold()
 	if failedTries > threshold {
 		checkpoint.Restore()
+		//Aqui substituir para habilitar o circuito lá no state manager
 	}
 }
 
