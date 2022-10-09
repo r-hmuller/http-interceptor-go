@@ -54,7 +54,7 @@ func generateSnapshot() {
 	sendRequestToStateManager("checkpoint", "false")
 
 	//Aqui marcar todos os processed como snapshoted
-
+	UpdateRequestToSnapshoted()
 	UpdateVariable("isCheckpointing", "false")
 	go RemoveAllSnapshotedRequestsFromMaps()
 	logging.LogToSnapshotFile("Snapshot completed")

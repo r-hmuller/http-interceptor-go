@@ -140,3 +140,45 @@ func addHeaders(original *http.Request, created *http.Request) {
 		}
 	}
 }
+
+func ReprocessItem(original *http.Request) {
+	client := getHttpClient()
+	fullUrl := getScheme() + original.URL.String()
+
+	requestBody, err := ioutil.ReadAll(original.Body)
+	if err != nil {
+		log.Printf("Error reading body: %v", err)
+		return
+	}
+	original.Body = ioutil.NopCloser(bytes.NewBuffer(requestBody))
+
+	req, err := http.NewRequest(original.Method, fullUrl, bytes.NewBuffer(requestBody))
+	if err != nil {
+		logging.LogToFile(err.Error(), "default")
+		return
+	}
+
+	newUuid, _ := uuid.NewV4()
+	req.Header.Add("Interceptor-Controller", newUuid.String())
+	addHeaders(original, req)
+	resp, err := client.Do(req)
+	if err != nil {
+		logging.LogToFile(err.Error(), "default")
+		return
+	}
+
+	_, err = getBodyContent(resp)
+	if err != nil {
+		logging.LogToFile(err.Error(), "default")
+		return
+	}
+	err = resp.Body.Close()
+	if err != nil {
+		logging.LogToFile(err.Error(), "default")
+		return
+	}
+	if err != nil {
+		logging.LogToFile(err.Error(), "default")
+		return
+	}
+}

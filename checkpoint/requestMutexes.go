@@ -34,7 +34,7 @@ func RemoveAllSnapshotedRequestsFromMaps() {
 	items := make([]int, 1000)
 	for key, value := range processedMap {
 		if value == "snapshoted" {
-			_ = append(items, key)
+			items = append(items, key)
 		}
 	}
 	for _, request := range items {
@@ -54,4 +54,15 @@ func UpdateRequestToSnapshoted() {
 	}
 
 	requestsMutex.Unlock()
+}
+
+func GetReprocessableRequests() []*http.Request {
+	requestsMutex.Lock()
+	var reprocessableList []*http.Request
+	for key, value := range processedMap {
+		if value == "processed" || value == "pending" {
+			reprocessableList = append(reprocessableList, requestsMap[key])
+		}
+	}
+	return reprocessableList
 }

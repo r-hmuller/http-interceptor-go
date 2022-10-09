@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"httpInterceptor/config"
+	"httpInterceptor/handler"
 	"httpInterceptor/logging"
 	"log"
 	"net/http"
@@ -25,5 +26,14 @@ func Restore() {
 		log.Fatalf("An Error Occured %v", err)
 	}
 	defer resp.Body.Close()
+	reprocessPendingOrProcessedRequests()
 	logging.LogToSnapshotFile("Restore completed")
+
+}
+
+func reprocessPendingOrProcessedRequests() {
+	reprocessableList := GetReprocessableRequests()
+	for _, item := range reprocessableList {
+		handler.ReprocessItem(item)
+	}
 }
