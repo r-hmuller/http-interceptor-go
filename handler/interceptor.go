@@ -2,7 +2,6 @@ package handler
 
 import (
 	"bytes"
-	"errors"
 	uuid "github.com/nu7hatch/gouuid"
 	"httpInterceptor/checkpoint"
 	"httpInterceptor/config"
@@ -49,8 +48,8 @@ func InterceptorHandler(w http.ResponseWriter, r *http.Request) {
 
 func sendRequest(method string, destiny *http.Request, uuid *uuid.UUID) HTTPResponse {
 	response := HTTPResponse{}
-	client := getHttpClient()
-	fullUrl := getScheme() + destiny.URL.String()
+	client := config.GetHttpClient()
+	fullUrl := config.GetScheme() + destiny.URL.String()
 
 	requestBody, err := ioutil.ReadAll(destiny.Body)
 	if err != nil {
@@ -86,7 +85,7 @@ func sendRequest(method string, destiny *http.Request, uuid *uuid.UUID) HTTPResp
 	}
 
 	req.Header.Add("Interceptor-Controller", uuid.String())
-	addHeaders(destiny, req)
+	config.AddHeaders(destiny, req)
 	resp, err := client.Do(req)
 	if err != nil {
 		logging.LogToFile(err.Error(), "default")
@@ -95,7 +94,7 @@ func sendRequest(method string, destiny *http.Request, uuid *uuid.UUID) HTTPResp
 	}
 	response.StatusCode = resp.StatusCode
 	response.Header = resp.Header
-	body, err := getBodyContent(resp)
+	body, err := config.GetBodyContent(resp)
 	if err != nil {
 		logging.LogToFile(err.Error(), "default")
 		response.StatusCode = 500
@@ -117,68 +116,4 @@ func sendRequest(method string, destiny *http.Request, uuid *uuid.UUID) HTTPResp
 	response.InterceptorControl = uuid
 
 	return response
-}
-
-func getScheme() string {
-	scheme := config.GetHttpScheme()
-	return scheme
-}
-
-func getBodyContent(response *http.Response) ([]byte, error) {
-	body, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		logging.LogToFile("Error parsing body", "default")
-		return nil, errors.New("Error parsing request body")
-	}
-	return body, nil
-}
-
-func addHeaders(original *http.Request, created *http.Request) {
-	for name, values := range original.Header {
-		for _, value := range values {
-			created.Header.Add(name, value)
-		}
-	}
-}
-
-func ReprocessItem(original *http.Request) {
-	client := getHttpClient()
-	fullUrl := getScheme() + original.URL.String()
-
-	requestBody, err := ioutil.ReadAll(original.Body)
-	if err != nil {
-		log.Printf("Error reading body: %v", err)
-		return
-	}
-	original.Body = ioutil.NopCloser(bytes.NewBuffer(requestBody))
-
-	req, err := http.NewRequest(original.Method, fullUrl, bytes.NewBuffer(requestBody))
-	if err != nil {
-		logging.LogToFile(err.Error(), "default")
-		return
-	}
-
-	newUuid, _ := uuid.NewV4()
-	req.Header.Add("Interceptor-Controller", newUuid.String())
-	addHeaders(original, req)
-	resp, err := client.Do(req)
-	if err != nil {
-		logging.LogToFile(err.Error(), "default")
-		return
-	}
-
-	_, err = getBodyContent(resp)
-	if err != nil {
-		logging.LogToFile(err.Error(), "default")
-		return
-	}
-	err = resp.Body.Close()
-	if err != nil {
-		logging.LogToFile(err.Error(), "default")
-		return
-	}
-	if err != nil {
-		logging.LogToFile(err.Error(), "default")
-		return
-	}
 }

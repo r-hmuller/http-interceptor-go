@@ -3,9 +3,10 @@ package checkpoint
 import (
 	"bytes"
 	"encoding/json"
+	uuid "github.com/nu7hatch/gouuid"
 	"httpInterceptor/config"
-	"httpInterceptor/handler"
 	"httpInterceptor/logging"
+	"io/ioutil"
 	"log"
 	"net/http"
 )
@@ -34,6 +35,48 @@ func Restore() {
 func reprocessPendingOrProcessedRequests() {
 	reprocessableList := GetReprocessableRequests()
 	for _, item := range reprocessableList {
-		handler.ReprocessItem(item)
+		reprocessItem(item)
+	}
+}
+
+func reprocessItem(original *http.Request) {
+	client := config.GetHttpClient()
+	fullUrl := config.GetScheme() + original.URL.String()
+
+	requestBody, err := ioutil.ReadAll(original.Body)
+	if err != nil {
+		log.Printf("Error reading body: %v", err)
+		return
+	}
+	original.Body = ioutil.NopCloser(bytes.NewBuffer(requestBody))
+
+	req, err := http.NewRequest(original.Method, fullUrl, bytes.NewBuffer(requestBody))
+	if err != nil {
+		logging.LogToFile(err.Error(), "default")
+		return
+	}
+
+	newUuid, _ := uuid.NewV4()
+	req.Header.Add("Interceptor-Controller", newUuid.String())
+	config.AddHeaders(original, req)
+	resp, err := client.Do(req)
+	if err != nil {
+		logging.LogToFile(err.Error(), "default")
+		return
+	}
+
+	_, err = config.GetBodyContent(resp)
+	if err != nil {
+		logging.LogToFile(err.Error(), "default")
+		return
+	}
+	err = resp.Body.Close()
+	if err != nil {
+		logging.LogToFile(err.Error(), "default")
+		return
+	}
+	if err != nil {
+		logging.LogToFile(err.Error(), "default")
+		return
 	}
 }

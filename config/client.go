@@ -1,4 +1,4 @@
-package handler
+package config
 
 import (
 	"crypto/tls"
@@ -11,7 +11,7 @@ import (
 var lock = &sync.Mutex{}
 var singleInstance *http.Client
 
-func getHttpClient() *http.Client {
+func GetHttpClient() *http.Client {
 	tr := &http.Transport{
 		MaxIdleConns:        0,
 		MaxIdleConnsPerHost: 500000,
