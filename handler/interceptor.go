@@ -30,10 +30,7 @@ func InterceptorHandler(w http.ResponseWriter, r *http.Request) {
 		logging.LogToFile(err.Error(), "fatal")
 	}
 
-	someMapMutex.Lock()
-	requestsMap[u.String()] = r
-	processedMap[u.String()] = false
-	someMapMutex.Unlock()
+	requestNumber := checkpoint.SaveRequestToBuffer(r)
 
 	requestToApp := r.Clone(r.Context())
 	requestToApp.URL.Host = config.GetApplicationURL()
@@ -47,9 +44,7 @@ func InterceptorHandler(w http.ResponseWriter, r *http.Request) {
 		logging.LogToFile(err.Error(), "fatal")
 	}
 
-	someMapMutex.Lock()
-	processedMap[u.String()] = true
-	someMapMutex.Unlock()
+	checkpoint.UpdateRequestToProcessed(requestNumber)
 }
 
 func sendRequest(method string, destiny *http.Request, uuid *uuid.UUID) HTTPResponse {

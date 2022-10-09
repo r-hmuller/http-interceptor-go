@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -23,8 +24,10 @@ func generateSnapshot() {
 	logging.LogToSnapshotFile("Starting snapshot")
 	UpdateVariable("isCheckpointing", "true")
 	//Mandar requisição state manager
+	sendRequestToStateManager("requestProcessed", strconv.Itoa(GetLatestRequestNumber()))
+
 	//POST /service/checkpoint
-	sendRequestToStateManager("true")
+	sendRequestToStateManager("checkpoint", "true")
 
 	postBody, _ := json.Marshal(map[string]string{
 		"Namespace":  config.GetContainerNamespace(),
@@ -44,22 +47,30 @@ func generateSnapshot() {
 	_, err = io.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatal(err)
+		sendRequestToStateManager("checkpoint", "false")
 	}
 
 	//Mandar requisição state manager
-	sendRequestToStateManager("false")
+	sendRequestToStateManager("checkpoint", "false")
+
+	//Aqui marcar todos os processed como snapshoted
 
 	UpdateVariable("isCheckpointing", "false")
+	go RemoveAllSnapshotedRequestsFromMaps()
 	logging.LogToSnapshotFile("Snapshot completed")
 }
 
-func sendRequestToStateManager(status string) {
+//Action = checkpoint or requestsProcessed
+func sendRequestToStateManager(action string, value string) {
 	postStateManager, _ := json.Marshal(map[string]string{
-		"Key":   "",
-		"Value": status,
+		"Key":   action,
+		"Value": value,
 	})
 	stateManagerBodyRequest := bytes.NewBuffer(postStateManager)
-	stateManagerUrl := config.GetStateManagerUrl() + "/" + config.GetServiceName() + "/checkpoint"
+	stateManagerUrl := config.GetStateManagerUrl() + "/" + config.GetServiceName() + "/config"
+	if action == "checkpoint" {
+		stateManagerUrl = config.GetStateManagerUrl() + "/" + config.GetServiceName() + "/checkpoint"
+	}
 	stateManageResp, err := http.Post(stateManagerUrl, "application/json", stateManagerBodyRequest)
 	if err != nil {
 		log.Fatalf("An Error Occured %v", err)
