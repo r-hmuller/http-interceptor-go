@@ -9,12 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"sync"
 )
-
-var requestsMap = make(map[string]*http.Request)
-var processedMap = make(map[string]bool)
-var someMapMutex = sync.RWMutex{}
 
 type HTTPResponse struct {
 	StatusCode         int
@@ -59,24 +54,6 @@ func sendRequest(method string, destiny *http.Request, uuid *uuid.UUID) HTTPResp
 	}
 	destiny.Body = ioutil.NopCloser(bytes.NewBuffer(requestBody))
 
-	attemptedLocking := 0
-	isCheckpointing := "true"
-	for isCheckpointing == "true" {
-		isCheckpointing, err = checkpoint.ReadVariable("isCheckpointing")
-		if err != nil || isCheckpointing == "false" {
-			break
-		}
-		if attemptedLocking == 50 {
-			break
-		}
-		attemptedLocking = attemptedLocking + 1
-	}
-
-	if isCheckpointing != "false" {
-		response.StatusCode = 503
-		return response
-	}
-
 	req, err := http.NewRequest(method, fullUrl, bytes.NewBuffer(requestBody))
 	if err != nil {
 		logging.LogToFile(err.Error(), "default")
@@ -101,11 +78,6 @@ func sendRequest(method string, destiny *http.Request, uuid *uuid.UUID) HTTPResp
 		return response
 	}
 	err = resp.Body.Close()
-	if err != nil {
-		logging.LogToFile(err.Error(), "default")
-		response.StatusCode = 500
-		return response
-	}
 	if err != nil {
 		logging.LogToFile(err.Error(), "default")
 		response.StatusCode = 500
